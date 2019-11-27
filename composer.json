@@ -1,0 +1,21 @@
+{
+    "name": "iamntz/wp-utils",
+    "description": "Various utils for WordPress development.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ionuț Staicu",
+            "email": "github@iamntz.com"
+        }
+    ],
+    "require": {},
+
+    "autoload": {
+        "psr-4": {
+            "iamntz\\wpUtils\\": "src"
+        },
+
+        "files": []
+    }
+}
