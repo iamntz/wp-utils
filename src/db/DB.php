@@ -24,6 +24,11 @@ abstract class DB
         $this->tableName = $this->wpdb->prefix . $this->getTableName();
     }
 
+    protected function getCollation()
+    {
+        return $this->wpdb->collate;
+    }
+
     protected function getSchemaVersionOption()
     {
         return $this->getTableName() . '_schema_version';
