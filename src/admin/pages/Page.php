@@ -7,8 +7,6 @@ class Page
     private $pages = [];
 
     private $config = [
-        'pageTitle' => 'Menu Page',
-        'menuTitle' => 'Menu Page',
         'icon' => 'dashicons-testimonial',
         'position' => 20,
     ];
@@ -47,8 +45,8 @@ class Page
         }
 
         add_menu_page(
-            $this->config['pageTitle'],
-            $this->config['menuTitle'],
+            $this->pages[0]->getTitle(),
+            $this->pages[0]->getTitle(),
             $this->pages[0]->getCap(),
             $this->pages[0]->getSlug(),
             [$this->pages[0], 'render'],
