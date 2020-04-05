@@ -123,5 +123,13 @@ $mix = new iamntz\wpUtils\assets\Mix(
 ### 3. Usage
 
 ```php
-wp_register_script('custom-admin-script', $mix->mix('/admin/dist/js/admin.js'));
+wp_register_script('custom-admin-script', $mix->mix('/admin/dist/js/admin.js'), [...$deps], $version, $in_footer);
+wp_register_style('custom-admin-style', $mix->mix('/admin/dist/css/admin.css'), [...$deps], $version, $media);
+```
+
+OR
+
+```php
+$mix->register('custom-admin-script', '/assets/dist/js/admin.min.js', [...$deps], $in_footer);
+$mix->register('custom-admin-script', '/assets/dist/js/admin.min.js', [...$deps], $media);
 ```

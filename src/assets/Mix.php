@@ -33,4 +33,21 @@ class Mix
 
         return $this->hot ?? $this->baseURL . $this->manifest[$fileName];
     }
+
+    public function register($handle, $fileName, $deps = [], $extra = true)
+    {
+        $src = $this->mix($fileName);
+
+        parse_str(parse_url($this->manifest[$fileName], PHP_URL_QUERY), $q);
+
+        $version = $q['id'];
+
+        if (substr($fileName, -3) === '.js') {
+            return wp_register_script($handle, $src, $deps, $version, $extra);
+        }
+
+        $media = !is_string($extra) || empty($extra) ? 'all' : $extra;
+
+        return wp_register_style($handle, $src, $deps, $version, $media);
+    }
 }
