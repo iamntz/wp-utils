@@ -99,8 +99,9 @@ if (mix.inProduction()) {
 If you're using hot module replacement, you need to create a `.env` file next to your `webpack.mix.js` file, that will contain:
 
 ```dotenv
-APP_URL=https://your-dev-server-url
+APP_URL=your-dev-server-url
 ```
+
 
 ### 2. Initialize
 

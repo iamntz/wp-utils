@@ -31,7 +31,7 @@ class Mix
             throw new \Exception("{$fileName} is not defined in mix-manifest.json");
         }
 
-        return $this->hot ?? $this->baseURL . $this->manifest[$fileName];
+        return ($this->hot ?? $this->baseURL) . $this->manifest[$fileName];
     }
 
     public function register($handle, $fileName, $deps = [], $extra = true)
@@ -40,7 +40,7 @@ class Mix
 
         parse_str(parse_url($this->manifest[$fileName], PHP_URL_QUERY), $q);
 
-        $version = $q['id'];
+        $version = $q['id'] ?? crc32($fileName);
 
         if (substr($fileName, -3) === '.js') {
             return wp_register_script($handle, $src, $deps, $version, $extra);
