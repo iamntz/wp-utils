@@ -106,12 +106,18 @@ APP_URL=https://your-dev-server-url
 
 If you're using in a plugin:
 ```php
-$mix = new iamntz\wpUtils\assets\Mix(__FILE__, plugin_dir_url(__FILE__));
+$mix = new iamntz\wpUtils\assets\Mix(
+    plugin_dir_path(__FILE__), 
+    plugin_dir_url(__FILE__)
+);
 ```
 
 If you're using in a theme:
 ```php
-$mix = new iamntz\wpUtils\assets\Mix(__FILE__, get_template_directory_uri());
+$mix = new iamntz\wpUtils\assets\Mix(
+    get_template_directory(), 
+    get_template_directory_uri()
+);
 ```
 
 ### 3. Usage

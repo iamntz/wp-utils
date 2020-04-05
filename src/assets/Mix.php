@@ -6,15 +6,15 @@ class Mix
 {
     public function __construct($baseDir, $baseURL = null)
     {
-        $this->baseDir = plugin_dir_path($baseDir);
-        $this->baseURL = $baseURL;
+        $this->baseDir = trailingslashit($baseDir);
+        $this->baseURL = trailingslashit($baseURL);
 
         $this->prepareManifest();
     }
 
     protected function prepareManifest()
     {
-        $manifestPath = $manifestPath ?? $this->baseDir . 'mix-manifest.json';
+        $manifestPath = $this->baseDir . 'mix-manifest.json';
 
         if (!file_exists($manifestPath)) {
             throw new \Exception("mix-manifest.json is not readable on {$manifestPath}");
@@ -31,6 +31,6 @@ class Mix
             throw new \Exception("{$fileName} is not defined in mix-manifest.json");
         }
 
-        return trailingslashit($this->hot ?? $this->baseURL) . $manifest[$fileName];
+        return $this->hot ?? $this->baseURL . $this->manifest[$fileName];
     }
 }
