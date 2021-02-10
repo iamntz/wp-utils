@@ -48,6 +48,23 @@ abstract class DB
 
         return $this->wpdb;
     }
+    
+
+    public function _dbDelta($q)
+    {
+        $query = preg_replace('/\n|\t/', ' ', $q);
+        $query = preg_replace('/[\s]{2,}/', ' ', $query);
+
+        if (preg_match('|ALTER TABLE|', $q)) {
+            // since dbDelta doesn't play nice with ALTER, we do it the hard way.
+            // we will get some errors tho
+            global $wpdb;
+            $wpdb->query($q);
+            return '';
+        }
+
+        return dbDelta($query);
+    }
 
     private function prepareDatabaseStructure()
     {
@@ -56,7 +73,18 @@ abstract class DB
         $schema = $this->getSchema();
 
         // todo: add error handling
-        $delta = array_map('dbDelta', $schema);
+        $wpdb->hide_errors();
+        
+        foreach ($schema as $migration) {
+            if (is_array($migration)) {
+                $delta = array_merge($delta, array_map([$this, '_dbDelta'], $migration));
+                continue;
+            }
+
+            $delta[] = $this->_dbDelta($migration);
+        }
+        
+        $wpdb->show_errors();
 
         update_option($this->getSchemaVersionOption(), $this->getSchemaVersion());
     }
