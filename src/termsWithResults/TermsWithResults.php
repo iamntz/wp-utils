@@ -11,6 +11,8 @@ final class TermsWithResults
     private $postType;
     private $validTerms = [];
 
+    private $postsWithinSameTerm = [];
+
     private $allTerms;
 
     /**
@@ -22,7 +24,7 @@ final class TermsWithResults
     public function __construct(array $get_terms_args, array $dependsOn = [], string $postType = 'post')
     {
         $this->get_terms_args = $get_terms_args;
-        $this->dependsOn = $dependsOn;
+        $this->dependsOn = array_filter($dependsOn);
         $this->postType = $postType;
 
         $this->allTerms = get_terms($get_terms_args);
@@ -44,35 +46,41 @@ final class TermsWithResults
         }));
     }
 
+    private function validateTerms(): array
+    {
+        array_walk($this->dependsOn, [$this, '_validateTerm']);
+        return $this->intersectArrayValues($this->validTerms);
+    }
+
     public function _validateTerm(WP_Term $term)
     {
-        global $wpdb;
-
-        $term_tax_id = $this->getTermTaxIDQuery($term);
+        $term_tax_id = $this->getTermTaxID($term);
 
         if (!$term_tax_id) {
             $this->validTerms[] = null;
             return;
         }
 
-        $posts_with_same_term = $this->getPostsWithinSameTerm($term_tax_id);
+        $this->postsWithinSameTerm[] = $this->getPostsWithinSameTerm($term_tax_id);
+
+        $posts_with_same_term = $this->intersectArrayValues($this->postsWithinSameTerm);
 
         if (empty($posts_with_same_term)) {
             $this->validTerms[] = null;
             return;
         }
 
-        $terms = $this->getMatchingTerms(wp_list_pluck($posts_with_same_term, 'object_id'));
+        $matchingTerms = $this->getMatchingTerms($posts_with_same_term);
 
-        if (empty($terms)) {
-            $this->validTerms[] = null;
+        if (empty($matchingTerms)) {
+            $this->validTerms[] = [];
             return;
         }
 
-        $this->validTerms[] = wp_list_pluck($terms, 'term_id');
+        $this->validTerms[] = wp_list_pluck($matchingTerms, 'term_id');
     }
 
-    private function getTermTaxIDQuery(WP_Term $term): string
+    private function getTermTaxID(WP_Term $term): int
     {
         global $wpdb;
 
@@ -86,7 +94,7 @@ final class TermsWithResults
 
         $q = $wpdb->prepare($q, $term->term_id, $term->taxonomy);
 
-        return $this->query($q, 'get_var');
+        return (int) $this->query($q, 'get_var');
     }
 
     private function getPostsWithinSameTerm(int $term_tax_id): array
@@ -97,13 +105,26 @@ final class TermsWithResults
             FROM $wpdb->term_relationships tr 
                 INNER JOIN $wpdb->posts p ON p.ID = tr.object_id 
             WHERE 
-                  term_taxonomy_id = %s AND 
+                  term_taxonomy_id = %d AND 
                   p.post_status = 'publish' AND 
                   p.post_type = '{$this->postType}'";
 
         $q = $wpdb->prepare($q, $term_tax_id);
 
-        return $this->query($q, 'get_results');
+        $results = $this->query($q, 'get_results');
+
+        return wp_list_pluck($results, 'object_id');
+    }
+
+    private function intersectArrayValues($arr): array
+    {
+        return array_reduce($arr, function ($carry, $post) {
+                if (is_null($carry)) {
+                    return $post;
+                }
+
+                return array_intersect($carry, $post);
+            }, null) ?? [];
     }
 
     private function getMatchingTerms(array $postIDs): array
@@ -114,27 +135,15 @@ final class TermsWithResults
         $postIDs = implode(',', array_map('absint', $postIDs));
 
         // we NEED `sprintf` because wp_prepare will quote the whole thing, and we don't want that.
-        $q = sprintf("SELECT DISTINCT t.term_id, t.name 
+        $q = sprintf("SELECT DISTINCT t.term_id
             FROM $wpdb->term_taxonomy tt 
                 INNER JOIN $wpdb->term_relationships tr ON tt.term_taxonomy_id = tr.term_taxonomy_id 
                 INNER JOIN wp_terms t ON t.term_id = tt.term_id 
-            WHERE tt.taxonomy = '{$taxonomy}' 
-              AND tr.object_id IN (%s)", $postIDs);
+            WHERE tt.taxonomy = '{$taxonomy}' AND 
+                  tr.object_id IN (%s)", $postIDs);
+
 
         return $this->query($q, 'get_results');
-    }
-
-    private function validateTerms(): array
-    {
-        array_walk($this->dependsOn, [$this, '_validateTerm']);
-
-        return array_reduce($this->validTerms, function ($carry, $item) {
-                if (is_null($carry)) {
-                    return $item;
-                }
-
-                return array_intersect($carry, $item);
-            }, null) ?? [];
     }
 
     private function query(string $query, string $method)
@@ -147,7 +156,7 @@ final class TermsWithResults
 
         $cacheKey = 'terms_with_results_' . sha1($query);
 
-        $results = wp_cache_get($cacheKey);
+        $results = WP_DEBUG ? false : wp_cache_get($cacheKey);
 
         if (!$results) {
             $results = call_user_func([$wpdb, $method], $query);
