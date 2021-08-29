@@ -32,4 +32,4 @@ So in order to get a result, the tags (i.e. terms) returned should have posts th
 - `marketing` within `campaign` taxonomy
 - `google` within `client` taxonomy
 
-Please make sure that queries may not be the most performance-friendly, but should work just fine for small/medium sites.
+Please take note that queries may not be the most performance-friendly, but should work just fine for small/medium sites.
