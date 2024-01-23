@@ -4,6 +4,12 @@ namespace iamntz\wpUtils\assets;
 
 class Mix
 {
+    private $mix = '';
+    private $hot = '';
+    private $manifest = '';
+    private $baseDir = '';
+    private $baseURL = '';
+
     public function __construct($baseDir, $baseURL = null)
     {
         $this->baseDir = trailingslashit($baseDir);
